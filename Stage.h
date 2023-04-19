@@ -18,6 +18,7 @@ class Stage : public GameObject
     COLOR field_[WIDTH][HEIGHT];
     XMFLOAT3 mousePos_;
     int selectX_, selectY_;
+    int selectColor_;
 
     // ドット座標から3D座標に変換する関数
     XMFLOAT3 ConvDrawPos(float x, float y);

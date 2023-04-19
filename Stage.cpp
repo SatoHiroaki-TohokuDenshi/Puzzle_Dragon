@@ -13,17 +13,16 @@ namespace {
 //コンストラクタ
 Stage::Stage(GameObject* parent)
 	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},
-	mousePos_(XMFLOAT3(0.0f,0.0f,0.0f)), selectX_(-1), selectY_(-1)
+	mousePos_(XMFLOAT3(0.0f,0.0f,0.0f)), selectX_(-1), selectY_(-1), selectColor_(-1)
 {
 	//field を赤で埋める
 	for (int h = 0; h < HEIGHT; h++)
 	{
 		for (int w = 0; w < WIDTH; w++)
 		{
-			field_[h][w] = COLOR::RED;
+			field_[h][w] =(COLOR)(rand() % COLOR::NUM);
 		}
 	}
-	field_[2][3] = COLOR::BLUE;
 }
 
 //デストラクタ
@@ -70,7 +69,10 @@ void Stage::Update()
 	else{
 		selectY_ = -1;
 	}
-	
+	if (selectX_ >= 0 && selectX_ < WIDTH &&
+		selectY_ >= 0 && selectY_ < HEIGHT) {
+		selectColor_ = field_[selectY_][selectX_];
+	}
 }
 
 //描画
@@ -102,8 +104,11 @@ void Stage::Draw()
 
 	Transform t;
 	t.position_ = ConvDrawPos(mousePos_.x - 20, mousePos_.y - 20);
-	Image::SetTransform(hPict_[COLOR::HEART], t);
-	Image::Draw(hPict_[COLOR::HEART]);
+	if (selectX_ >= 0 && selectX_ < WIDTH &&
+		selectY_ >= 0 && selectY_ < HEIGHT) {
+		Image::SetTransform(hPict_[selectColor_], t);
+		Image::Draw(hPict_[selectColor_]);
+	}
 }
 
 //開放
