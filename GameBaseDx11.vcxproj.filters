@@ -185,4 +185,7 @@
       <Filter>02Shader</Filter>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="状態遷移.txt" />
+  </ItemGroup>
 </Project>

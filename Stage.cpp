@@ -12,7 +12,7 @@ namespace {
 
 //コンストラクタ
 Stage::Stage(GameObject* parent)
-	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},
+	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},state_(S_IDLE),
 	mousePos_(XMFLOAT3(0.0f,0.0f,0.0f)), selectX_(-1), selectY_(-1), selectColor_(-1)
 {
 	//field をランダムな色で埋める
@@ -20,7 +20,7 @@ Stage::Stage(GameObject* parent)
 	{
 		for (int w = 0; w < WIDTH; w++)
 		{
-			field_[h][w] =(COLOR)(rand() % COLOR::NUM);
+			field_[w][h] =(COLOR)(rand() % COLOR::NUM);
 		}
 	}
 }
@@ -54,29 +54,24 @@ void Stage::Initialize()
 //更新
 void Stage::Update()
 {
-	//マウスの位置の取得
-	mousePos_ = Input::GetMousePosition();
-	mousePos_.x -= 608;
-	mousePos_.y -= 330;
-
-	//X座標の判定
-	if (mousePos_.x >= 0) {
-		selectX_ = (int)(mousePos_.x / 40);
-	}
-	else {
-		selectX_ = -1;
-	}
-	//Y座標の判定
-	if (mousePos_.y >= 0) {
-		selectY_ = (int)(mousePos_.y / 40);
-	}
-	else{
-		selectY_ = -1;
-	}
-	//現在取得している玉の選択
-	if (selectX_ >= 0 && selectX_ < WIDTH &&
-		selectY_ >= 0 && selectY_ < HEIGHT) {
-		selectColor_ = field_[selectY_][selectX_];
+	switch (state_) {
+	case STATE::S_IDLE:
+		UpdateIdle();
+		break;
+	case STATE::S_MOVE:
+		UpdateMove();
+		break;
+	case STATE::S_ERASE:
+		UpdateErase();
+		break;
+	case STATE::S_FALL:
+		UpdateFall();
+		break;
+	case STATE::S_ATTACK:
+		UpdateAttack();
+		break;
+	default:
+		break;
 	}
 }
 
@@ -124,6 +119,48 @@ void Stage::Release()
 {
 }
 
+void Stage::UpdateIdle() {
+	//マウスの左クリックしたら
+	if (Input::IsMouseButtonDown(0)) {
+		CalcMouseSelect();
+		if (selectX_ >= 0 && selectX_ < WIDTH &&
+			selectY_ >= 0 && selectY_ < HEIGHT) {
+			state_ = STATE::S_MOVE;
+		}
+	}
+}
+
+void Stage::UpdateMove() {
+	int lastX = selectX_;
+	int lastY = selectY_;
+
+	if (selectY_ < 0) selectY_ = 0;
+	if (selectX_ < 0) selectX_ = 0;
+	if (selectY_ >= HEIGHT) selectY_ = HEIGHT;
+	if (selectX_ >= WIDTH) selectX_ = WIDTH;
+
+	CalcMouseSelect();
+	if (selectX_ != lastX ||
+		selectY_ != lastY) {
+		auto tmp = field_[selectY_][selectX_];
+		field_[selectY_][selectX_] = field_[lastY][lastX];
+		field_[lastY][lastX] = tmp;
+	}
+	if (Input::IsMouseButtonUp(0)) {
+//		state_ = STATE::S_ERASE;
+		state_ = STATE::S_IDLE;
+	}
+}
+void Stage::UpdateErase() {
+
+}
+void Stage::UpdateFall() {
+
+}
+void Stage::UpdateAttack() {
+
+}
+
 // ドット座標から3D座標に変換する関数
 XMFLOAT3 Stage::ConvDrawPos(float x, float y)
 {
@@ -132,4 +169,32 @@ XMFLOAT3 Stage::ConvDrawPos(float x, float y)
 	p.y = -y / 40 * 0.110f;
 	p.z = 0;
 	return p;
+}
+
+void Stage::CalcMouseSelect()
+{
+	//マウスの位置の取得
+	mousePos_ = Input::GetMousePosition();
+	mousePos_.x -= 608;
+	mousePos_.y -= 330;
+
+	//X座標の判定
+	if (mousePos_.x >= 0) {
+		selectX_ = (int)(mousePos_.x / 40);
+	}
+	else {
+		selectX_ = -1;
+	}
+	//Y座標の判定
+	if (mousePos_.y >= 0) {
+		selectY_ = (int)(mousePos_.y / 40);
+	}
+	else {
+		selectY_ = -1;
+	}
+	//現在取得している玉の選択
+	if (selectX_ >= 0 && selectX_ < WIDTH &&
+		selectY_ >= 0 && selectY_ < HEIGHT) {
+		selectColor_ = field_[selectY_][selectX_];
+	}
 }
