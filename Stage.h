@@ -35,7 +35,11 @@ class Stage : public GameObject
     struct BALLINFO {
         COLOR color;
         float x, y;
+#if 0
         int counter;
+#endif
+        float bx, by;
+        float rate;
     };
 
     static const int WIDTH = 6;     //フィールドの幅

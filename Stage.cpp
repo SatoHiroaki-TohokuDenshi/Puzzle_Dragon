@@ -21,6 +21,15 @@ Stage::Stage(GameObject* parent)
 			field_[h][w].color =(COLOR)(rand() % COLOR::NUM);
 			field_[h][w].x = w * 40;
 			field_[h][w].y = h * 40;
+#if 0
+			//ŠŠ‚ç‚©‚É“®‚©‚·•û–@‡@
+			field_[selectY_][selectX_].counter = 0;
+#else
+			//ŠŠ‚ç‚©‚É“®‚©‚·•û–@‡A
+			field_[h][w].bx = w * 40;
+			field_[h][w].by = h * 40;
+			field_[h][w].rate = 1.0f;
+#endif
 		}
 	}
 }
@@ -136,18 +145,40 @@ void Stage::UpdateMove() {
 		auto tmp = field_[selectY_][selectX_];
 		field_[selectY_][selectX_] = field_[lastY][lastX];
 		field_[lastY][lastX] = tmp;
+#if 0
 		field_[selectY_][selectX_].counter = 10;
 		field_[lastY][lastX].counter = 10;
+#else
+		field_[selectY_][selectX_].bx = field_[selectY_][selectX_].x;
+		field_[selectY_][selectX_].by = field_[selectY_][selectX_].y;
+		field_[selectY_][selectX_].rate = 0.0f;
+		field_[lastY][lastX].bx = field_[lastY][lastX].x;
+		field_[lastY][lastX].by = field_[lastY][lastX].y;
+		field_[lastY][lastX].rate = 0.0f;
+#endif
 	}
-
+	//ŠŠ‚ç‚©‚É“®‚©‚·
 	for (int h = 0; h < HEIGHT; h++) {
 		for (int w = 0; w < WIDTH; w++) {
-			//ŠŠ‚ç‚©‚É“®‚©‚·
+#if 0
+			//•û–@‡@
 			if (field_[h][w].counter > 0) {
 				field_[h][w].x += (w * 40 - field_[h][w].x) / field_[h][w].counter;
 				field_[h][w].y += (h * 40 - field_[h][w].y) / field_[h][w].counter;
 				field_[h][w].counter--;
 			}
+#else
+			//•û–@‡A
+			if (field_[h][w].rate < 1.0f) {
+				field_[h][w].rate += 0.1f;
+				if (field_[h][w].rate > 1.0f)
+					field_[h][w].rate = 1.0f;
+				field_[h][w].x = (w * 40 - field_[h][w].bx) *
+					field_[h][w].rate + field_[h][w].bx;
+				field_[h][w].y = (h * 40 - field_[h][w].by) *
+					field_[h][w].rate + field_[h][w].by;
+			}
+#endif
 		}
 	}
 
