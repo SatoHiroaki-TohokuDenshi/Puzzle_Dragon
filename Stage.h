@@ -6,11 +6,11 @@ class Stage : public GameObject
 {
     // 状態
     enum STATE {
-        S_IDLE = 0,
-        S_MOVE,
-        S_ERASE,
-        S_FALL,
-        S_ATTACK,
+        S_IDLE = 0,     //待機状態
+        S_MOVE,         //操作状態
+        S_ERASE,        //消去状態
+        S_FALL,         //落下状態
+        S_ATTACK,       //攻撃状態
     };
     STATE state_;
 
@@ -32,19 +32,22 @@ class Stage : public GameObject
         NUM,        //最大値
     };
 
+    //玉の情報を保持する構造体
     struct BALLINFO {
-        COLOR color;
-        float x, y;
+        COLOR color;        //色情報
+        float x, y;         //現在の位置情報
 #if 0
         int counter;
+#else
+        float bx, by;       //滑らかに動かすための位置情報
+        float rate;         //滑らかに動かすための進捗情報
 #endif
-        float bx, by;
-        float rate;
+        int doErase;        //消える数
     };
 
     static const int WIDTH = 6;     //フィールドの幅
     static const int HEIGHT = 5;    //フィールドの高さ
-    BALLINFO field_[HEIGHT][WIDTH];    //フィールドのデータ
+    BALLINFO field_[HEIGHT][WIDTH]; //フィールドのデータ
     XMFLOAT3 mousePos_;             //マウスの位置
     int selectX_, selectY_;         //現在選択している玉の座標
     int selectColor_;               //現在選択している玉のデータ
@@ -71,5 +74,12 @@ public:
     // ドット座標から3D座標に変換する関数
     XMFLOAT3 ConvDrawPos(float x, float y);
 
+    //選択している玉を算出
     void CalcMouseSelect();
+
+    //滑らかに動かすための計算
+    float GetRateValue(float begin, float end, float rate);
+
+    //消えるかどうかをチェック
+    bool CheckErase();
 };

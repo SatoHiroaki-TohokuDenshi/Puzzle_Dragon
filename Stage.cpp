@@ -13,23 +13,25 @@ namespace {
 //コンストラクタ
 Stage::Stage(GameObject* parent)
 	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},state_(S_IDLE),
-	mousePos_(XMFLOAT3(0.0f,0.0f,0.0f)), selectX_(-1), selectY_(-1), selectColor_(NOCOLOR)
+	mousePos_(Input::GetMousePosition()), selectX_(-1), selectY_(-1), selectColor_(NOCOLOR)
 {
 	//field をランダムな色で埋める
 	for (int h = 0; h < HEIGHT; h++) {
 		for (int w = 0; w < WIDTH; w++) {
-			field_[h][w].color =(COLOR)(rand() % COLOR::NUM);
-			field_[h][w].x = w * 40;
-			field_[h][w].y = h * 40;
+			auto& set = field_[h][w];
+			set.color =(COLOR)(rand() % COLOR::NUM);
+			set.x = w * 40;
+			set.y = h * 40;
 #if 0
 			//滑らかに動かす方法①
-			field_[selectY_][selectX_].counter = 0;
+			set.counter = 0;
 #else
 			//滑らかに動かす方法②
-			field_[h][w].bx = w * 40;
-			field_[h][w].by = h * 40;
-			field_[h][w].rate = 1.0f;
+			set.bx = w * 40;
+			set.by = h * 40;
+			set.rate = 1.0f;
 #endif
+			set.doErase = 0;
 		}
 	}
 }
@@ -44,12 +46,8 @@ void Stage::Initialize()
 {
 	// ファイル名の配列
 	const char* fileName[] = {
-	"ball0.png" ,
-	"ball1.png" ,
-	"ball2.png" ,
-	"ball3.png" ,
-	"ball4.png" ,
-	"ball5.png" ,
+	"ball0.png" , "ball1.png" , "ball2.png" ,
+	"ball3.png" , "ball4.png" , "ball5.png" ,
 	};
 
 	//画像データのロード
@@ -97,6 +95,9 @@ void Stage::Draw()
 			if (w == selectX_ && h == selectY_) {
 				t.scale_ = XMFLOAT3(1.2f, 1.2f, 0.0f);
 			}
+			else if (field_[h][w].doErase > 0) {
+				t.scale_ = XMFLOAT3(1.5f, 1.5f, 0.0f);
+			}
 			else {
 				t.scale_ = XMFLOAT3(1.0f, 1.0f, 0.0f);
 			}
@@ -141,50 +142,60 @@ void Stage::UpdateMove() {
 	if (selectY_ >= HEIGHT) selectY_ = HEIGHT - 1;
 	if (selectX_ >= WIDTH) selectX_ = WIDTH - 1;
 
+
+
 	if (selectX_ != lastX || selectY_ != lastY) {
-		auto tmp = field_[selectY_][selectX_];
-		field_[selectY_][selectX_] = field_[lastY][lastX];
-		field_[lastY][lastX] = tmp;
+		std::swap(field_[selectY_][selectX_], field_[lastY][lastX]);
+
+		auto& s = field_[selectY_][selectX_];
+		auto& la = field_[lastY][lastX];
 #if 0
-		field_[selectY_][selectX_].counter = 10;
-		field_[lastY][lastX].counter = 10;
+		//方法①
+		s.counter = 10;
+		la.counter = 10;
 #else
-		field_[selectY_][selectX_].bx = field_[selectY_][selectX_].x;
-		field_[selectY_][selectX_].by = field_[selectY_][selectX_].y;
-		field_[selectY_][selectX_].rate = 0.0f;
-		field_[lastY][lastX].bx = field_[lastY][lastX].x;
-		field_[lastY][lastX].by = field_[lastY][lastX].y;
-		field_[lastY][lastX].rate = 0.0f;
+		//方法②
+
+		s.bx = s.x;
+		s.by = s.y;
+		s.rate = 0.0f;
+		la.bx = la.x;
+		la.by = la.y;
+		la.rate = 0.0f;
 #endif
 	}
 	//滑らかに動かす
 	for (int h = 0; h < HEIGHT; h++) {
 		for (int w = 0; w < WIDTH; w++) {
+			auto& b = field_[h][w];
 #if 0
 			//方法①
-			if (field_[h][w].counter > 0) {
-				field_[h][w].x += (w * 40 - field_[h][w].x) / field_[h][w].counter;
-				field_[h][w].y += (h * 40 - field_[h][w].y) / field_[h][w].counter;
-				field_[h][w].counter--;
+			if (b.counter > 0) {
+				b.x += (w * 40 - b.x) / b.counter;
+				b.y += (h * 40 - b.y) / b.counter;
+				b.counter--;
 			}
 #else
 			//方法②
-			if (field_[h][w].rate < 1.0f) {
-				field_[h][w].rate += 0.1f;
-				if (field_[h][w].rate > 1.0f)
-					field_[h][w].rate = 1.0f;
-				field_[h][w].x = (w * 40 - field_[h][w].bx) *
-					field_[h][w].rate + field_[h][w].bx;
-				field_[h][w].y = (h * 40 - field_[h][w].by) *
-					field_[h][w].rate + field_[h][w].by;
+			if (b.rate < 1.0f) {
+				b.rate += 0.1f;
+				if (b.rate > 1.0f)
+					b.rate = 1.0f;
+				b.x = GetRateValue(b.bx, w * 40, b.rate);
+				b.y = GetRateValue(b.by, h * 40, b.rate);
 			}
 #endif
 		}
 	}
 
 	if (Input::IsMouseButtonUp(0)) {
-//		state_ = STATE::S_ERASE;
-		state_ = STATE::S_IDLE;
+		selectColor_ = COLOR::NOCOLOR;
+		if (CheckErase()) {
+			state_ = STATE::S_ERASE;
+		}
+		else {
+			state_ = STATE::S_IDLE;
+		}
 	}
 }
 void Stage::UpdateErase() {
@@ -198,8 +209,7 @@ void Stage::UpdateAttack() {
 }
 
 // ドット座標から3D座標に変換する関数
-XMFLOAT3 Stage::ConvDrawPos(float x, float y)
-{
+XMFLOAT3 Stage::ConvDrawPos(float x, float y) {
 	XMFLOAT3 p;
 	p.x = x / 40 * 0.062f;
 	p.y =- y / 40 * 0.110f;
@@ -207,8 +217,8 @@ XMFLOAT3 Stage::ConvDrawPos(float x, float y)
 	return p;
 }
 
-void Stage::CalcMouseSelect()
-{
+//選択している玉を算出
+void Stage::CalcMouseSelect() {
 	//マウスの位置の取得
 	mousePos_ = Input::GetMousePosition();
 	mousePos_.x -= 608;
@@ -233,4 +243,39 @@ void Stage::CalcMouseSelect()
 		selectY_ >= 0 && selectY_ < HEIGHT) {
 		selectColor_ = field_[selectY_][selectX_].color;
 	}
+}
+
+//滑らかに動かすための計算
+float Stage::GetRateValue(float begin, float end, float rate) {
+	return (float)((end - begin) * rate + begin);
+}
+
+//消えるかどうかをチェック
+bool Stage::CheckErase() {
+	bool IsErase = false;
+	//横の確認
+	for (int h = 0; h < HEIGHT; h++) {
+		for (int w = 0; w < WIDTH - 3; w++) {
+			if (field_[h][w].color == field_[h][w + 1].color &&
+				field_[h][w].color == field_[h][w + 2].color) {
+				field_[h][w].doErase = 1;
+				field_[h][w + 1].doErase = 1;
+				field_[h][w + 2].doErase = 1;
+				IsErase = true;
+			}
+		}
+	}
+	//縦の確認
+	for (int w = 0; w < WIDTH; w++) {
+		for (int h = 0; h < HEIGHT - 3; h++) {
+			if (field_[h][w].color == field_[h + 1][w].color &&
+				field_[h][w].color == field_[h + 2][w].color) {
+				field_[h][w].doErase = 1;
+				field_[h + 1][w].doErase = 1;
+				field_[h + 2][w].doErase = 1;
+				IsErase = true;
+			}
+		}
+	}
+	return IsErase;
 }
