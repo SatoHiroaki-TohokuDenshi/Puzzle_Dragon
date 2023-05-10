@@ -22,6 +22,7 @@ class Stage : public GameObject
 
     //玉の色
     enum COLOR {
+        NOCOLOR = -1,
         RED = 0,    //赤
         BLUE,       //青
         YELLOW,     //黄
@@ -31,9 +32,15 @@ class Stage : public GameObject
         NUM,        //最大値
     };
 
+    struct BALLINFO {
+        COLOR color;
+        float x, y;
+        int counter;
+    };
+
     static const int WIDTH = 6;     //フィールドの幅
     static const int HEIGHT = 5;    //フィールドの高さ
-    COLOR field_[WIDTH][HEIGHT];    //フィールドのデータ
+    BALLINFO field_[HEIGHT][WIDTH];    //フィールドのデータ
     XMFLOAT3 mousePos_;             //マウスの位置
     int selectX_, selectY_;         //現在選択している玉の座標
     int selectColor_;               //現在選択している玉のデータ
