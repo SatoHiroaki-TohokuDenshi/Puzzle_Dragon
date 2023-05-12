@@ -255,7 +255,7 @@ bool Stage::CheckErase() {
 	bool IsErase = false;
 	//横の確認
 	for (int h = 0; h < HEIGHT; h++) {
-		for (int w = 0; w < WIDTH - 3; w++) {
+		for (int w = 0; w < WIDTH - 2; w++) {
 			if (field_[h][w].color == field_[h][w + 1].color &&
 				field_[h][w].color == field_[h][w + 2].color) {
 				field_[h][w].doErase = 1;
@@ -267,7 +267,7 @@ bool Stage::CheckErase() {
 	}
 	//縦の確認
 	for (int w = 0; w < WIDTH; w++) {
-		for (int h = 0; h < HEIGHT - 3; h++) {
+		for (int h = 0; h < HEIGHT - 2; h++) {
 			if (field_[h][w].color == field_[h + 1][w].color &&
 				field_[h][w].color == field_[h + 2][w].color) {
 				field_[h][w].doErase = 1;
