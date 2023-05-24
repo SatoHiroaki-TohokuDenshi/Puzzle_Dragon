@@ -13,7 +13,8 @@ namespace {
 //コンストラクタ
 Stage::Stage(GameObject* parent)
 	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},state_(S_IDLE),
-	mousePos_(Input::GetMousePosition()), selectX_(-1), selectY_(-1), selectColor_(NOCOLOR)
+	mousePos_(Input::GetMousePosition()), selectX_(-1), selectY_(-1), selectColor_(NOCOLOR),
+	eraseTime_(0)
 {
 	//field をランダムな色で埋める
 	for (int h = 0; h < HEIGHT; h++) {
@@ -22,15 +23,13 @@ Stage::Stage(GameObject* parent)
 			set.color =(COLOR)(rand() % COLOR::NUM);
 			set.x = (float)(w * 40);
 			set.y = (float)(h * 40);
-#if 0
-			//滑らかに動かす方法①
-			set.counter = 0;
-#else
-			//滑らかに動かす方法②
+
+			//滑らかに動かす変数
 			set.bx = (float)(w * 40);
 			set.by = (float)(h * 40);
 			set.rate = 1.0f;
-#endif
+
+			//消すための変数
 			set.doErase = 0;
 		}
 	}
@@ -93,7 +92,7 @@ void Stage::Draw()
 			Transform t;
 			t.position_ = ConvDrawPos(field_[h][w].x, field_[h][w].y);
 			if (field_[h][w].doErase > 0) {
-				t.scale_ = XMFLOAT3(1.5f, 1.5f, 0.0f);
+				t.scale_ = XMFLOAT3(0.5f, 0.5f, 0.0f);
 			}
 			else if (w == selectX_ && h == selectY_) {
 				t.scale_ = XMFLOAT3(1.2f, 1.2f, 0.0f);
@@ -137,25 +136,27 @@ void Stage::UpdateMove() {
 
 	CalcMouseSelect();
 	
+	//範囲外の処理
 	if (selectY_ < 0) selectY_ = 0;
 	if (selectX_ < 0) selectX_ = 0;
 	if (selectY_ >= HEIGHT) selectY_ = HEIGHT - 1;
 	if (selectX_ >= WIDTH) selectX_ = WIDTH - 1;
 
 
-
+	//移動したかどうかを判定
 	if (selectX_ != lastX || selectY_ != lastY) {
 		std::swap(field_[selectY_][selectX_], field_[lastY][lastX]);
 
 		auto& s = field_[selectY_][selectX_];
 		auto& la = field_[lastY][lastX];
+		
+		//滑らかに動かす準備
 #if 0
 		//方法①
 		s.counter = 10;
 		la.counter = 10;
 #else
 		//方法②
-
 		s.bx = s.x;
 		s.by = s.y;
 		s.rate = 0.0f;
@@ -164,19 +165,11 @@ void Stage::UpdateMove() {
 		la.rate = 0.0f;
 #endif
 	}
-	//滑らかに動かす
+
+	//滑らかに動かす演出
 	for (int h = 0; h < HEIGHT; h++) {
 		for (int w = 0; w < WIDTH; w++) {
 			auto& b = field_[h][w];
-#if 0
-			//方法①
-			if (b.counter > 0) {
-				b.x += (w * 40 - b.x) / b.counter;
-				b.y += (h * 40 - b.y) / b.counter;
-				b.counter--;
-			}
-#else
-			//方法②
 			if (b.rate < 1.0f) {
 				b.rate += 0.1f;
 				if (b.rate > 1.0f)
@@ -184,11 +177,12 @@ void Stage::UpdateMove() {
 				b.x = GetRateValue(b.bx, (float)(w * 40), b.rate);
 				b.y = GetRateValue(b.by, (float)(h * 40), b.rate);
 			}
-#endif
 		}
 	}
 
+	//左クリックを離したら
 	if (Input::IsMouseButtonUp(0)) {
+		eraseTime_ = 30;
 		selectColor_ = COLOR::NOCOLOR;
 		if (CheckErase()) {
 			state_ = STATE::S_ERASE;
@@ -198,12 +192,30 @@ void Stage::UpdateMove() {
 		}
 	}
 }
+
 void Stage::UpdateErase() {
-
+	PrepareFall();
+	eraseTime_--;
+	if (eraseTime_ <= 0) {
+		state_ = STATE::S_FALL;
+	}
 }
+
 void Stage::UpdateFall() {
-
+	for (int h = 0; h < HEIGHT; h++) {
+		for (int w = 0; w < WIDTH; w++) {
+			auto& b = field_[h][w];
+			if (b.rate < 1.0f) {
+				b.rate += 0.1f;
+				if (b.rate > 1.0f)
+					b.rate = 1.0f;
+				b.x = GetRateValue(b.bx, (float)(w * 40), b.rate);
+				b.y = GetRateValue(b.by, (float)(h * 40), b.rate);
+			}
+		}
+	}
 }
+
 void Stage::UpdateAttack() {
 
 }
@@ -278,4 +290,28 @@ bool Stage::CheckErase() {
 		}
 	}
 	return IsErase;
+}
+
+//落ちるための準備
+void Stage::PrepareFall() {
+	for (int w = 0; w < WIDTH; w++) {
+		int hole = 0;
+		for (int h = HEIGHT - 1; h >= 0; h--) {
+			if (field_[h][w].doErase > 0) {
+				hole += 1;
+			}
+			else {
+				//field_[h][w]をhole分だけ落下させる
+				field_[h + hole][w] = field_[h][w];
+				field_[h + hole][w].by = field_[h][w].y;
+				field_[h + hole][w].bx = field_[h][w].x;
+				field_[h + hole][w].rate = 0.0f;
+			}
+		}
+		//玉を補充する
+		for (int h = 0; h < hole; h++) {
+			auto& set = field_[h][w];
+			set.color = (COLOR)(rand() % COLOR::NUM);
+		}
+	}
 }

@@ -48,9 +48,13 @@ class Stage : public GameObject
     static const int WIDTH = 6;     //フィールドの幅
     static const int HEIGHT = 5;    //フィールドの高さ
     BALLINFO field_[HEIGHT][WIDTH]; //フィールドのデータ
+    
     XMFLOAT3 mousePos_;             //マウスの位置
     int selectX_, selectY_;         //現在選択している玉の座標
     int selectColor_;               //現在選択している玉のデータ
+
+    int eraseTime_;                 //消える演出用のタイマー
+
     int hPict_[COLOR::NUM];         //画像番号
 public:
     //コンストラクタ
@@ -82,4 +86,7 @@ public:
 
     //消えるかどうかをチェック
     bool CheckErase();
+
+    //落ちるための準備
+    void PrepareFall();
 };
