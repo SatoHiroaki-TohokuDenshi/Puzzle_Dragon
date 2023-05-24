@@ -182,9 +182,11 @@ void Stage::UpdateMove() {
 
 	//ç∂ÉNÉäÉbÉNÇó£ÇµÇΩÇÁ
 	if (Input::IsMouseButtonUp(0)) {
-		eraseTime_ = 30;
 		selectColor_ = COLOR::NOCOLOR;
+		selectX_ = -1;
+		selectY_ = -1;
 		if (CheckErase()) {
+			eraseTime_ = 30;
 			state_ = STATE::S_ERASE;
 		}
 		else {
@@ -213,6 +215,20 @@ void Stage::UpdateFall() {
 				b.y = GetRateValue(b.by, (float)(h * 40), b.rate);
 			}
 		}
+	}
+	for (int h = 0; h < HEIGHT; h++) {
+		for (int w = 0; w < WIDTH; w++) {
+			if (field_[h][w].rate < 1.0f) {		//óéÇøÇÈìríÜÇÃÇ‡ÇÃÇ™Ç†Ç¡ÇΩÇÁ
+				return;
+			}
+		}
+	}
+	if (CheckErase()) {
+		eraseTime_ = 30;
+		state_ = STATE::S_ERASE;
+	}
+	else {
+		state_ = STATE::S_IDLE;
 	}
 }
 
@@ -309,9 +325,15 @@ void Stage::PrepareFall() {
 			}
 		}
 		//ã Çï‚è[Ç∑ÇÈ
-		for (int h = 0; h < hole; h++) {
-			auto& set = field_[h][w];
+		for (int b = 0; b < hole; b++) {
+			auto& set = field_[b][w];
 			set.color = (COLOR)(rand() % COLOR::NUM);
+			set.x = (float)(w * 40);
+			set.y = (float)((b - hole) * 40);
+			set.bx = (float)(w * 40);
+			set.by = (float)((b - hole) * 40);
+			set.doErase = 0;
+			set.rate = 0.0f;
 		}
 	}
 }
