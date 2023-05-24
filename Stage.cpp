@@ -8,11 +8,9 @@ namespace {
 	static const int TOP = 80;	//盤面の上辺の位置
 };
 
-
-
 //コンストラクタ
 Stage::Stage(GameObject* parent)
-	:GameObject(parent, "Stage"), hPict_{-1, -1, -1, -1, -1, -1},state_(S_IDLE),
+	:GameObject(parent, "Stage"), state_(S_IDLE),
 	mousePos_(Input::GetMousePosition()), selectX_(-1), selectY_(-1), selectColor_(NOCOLOR),
 	eraseTime_(0)
 {
@@ -43,16 +41,10 @@ Stage::~Stage()
 //初期化
 void Stage::Initialize()
 {
-	// ファイル名の配列
-	const char* fileName[] = {
-	"ball0.png" , "ball1.png" , "ball2.png" ,
-	"ball3.png" , "ball4.png" , "ball5.png" ,
-	};
-
 	//画像データのロード
-	for (int type = 0; type < COLOR::NUM; type++)
-	{
-		hPict_[type] = Image::Load(fileName[type]);
+	for (int type = 0; type < COLOR::NUM; type++) {
+		std::string fileName = "ball" + std::to_string(type) + ".png";
+		hPict_[type] = Image::Load(fileName);
 		assert(hPict_[type] >= 0);
 	}
 }
