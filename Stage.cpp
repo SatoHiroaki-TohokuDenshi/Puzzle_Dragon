@@ -20,15 +20,15 @@ Stage::Stage(GameObject* parent)
 		for (int w = 0; w < WIDTH; w++) {
 			auto& set = field_[h][w];
 			set.color =(COLOR)(rand() % COLOR::NUM);
-			set.x = w * 40;
-			set.y = h * 40;
+			set.x = (float)(w * 40);
+			set.y = (float)(h * 40);
 #if 0
 			//ŠŠ‚ç‚©‚É“®‚©‚·•û–@‡@
 			set.counter = 0;
 #else
 			//ŠŠ‚ç‚©‚É“®‚©‚·•û–@‡A
-			set.bx = w * 40;
-			set.by = h * 40;
+			set.bx = (float)(w * 40);
+			set.by = (float)(h * 40);
 			set.rate = 1.0f;
 #endif
 			set.doErase = 0;
@@ -92,11 +92,11 @@ void Stage::Draw()
 			int color = field_[h][w].color;
 			Transform t;
 			t.position_ = ConvDrawPos(field_[h][w].x, field_[h][w].y);
-			if (w == selectX_ && h == selectY_) {
-				t.scale_ = XMFLOAT3(1.2f, 1.2f, 0.0f);
-			}
-			else if (field_[h][w].doErase > 0) {
+			if (field_[h][w].doErase > 0) {
 				t.scale_ = XMFLOAT3(1.5f, 1.5f, 0.0f);
+			}
+			else if (w == selectX_ && h == selectY_) {
+				t.scale_ = XMFLOAT3(1.2f, 1.2f, 0.0f);
 			}
 			else {
 				t.scale_ = XMFLOAT3(1.0f, 1.0f, 0.0f);
@@ -181,8 +181,8 @@ void Stage::UpdateMove() {
 				b.rate += 0.1f;
 				if (b.rate > 1.0f)
 					b.rate = 1.0f;
-				b.x = GetRateValue(b.bx, w * 40, b.rate);
-				b.y = GetRateValue(b.by, h * 40, b.rate);
+				b.x = GetRateValue(b.bx, (float)(w * 40), b.rate);
+				b.y = GetRateValue(b.by, (float)(h * 40), b.rate);
 			}
 #endif
 		}
